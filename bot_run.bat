@@ -2,5 +2,5 @@
 
 call %~dp0.venv\Scripts\activate
 
-python bot_telegram.py
+python bot_max.py
 

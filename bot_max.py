@@ -65,27 +65,27 @@ async def main():
     # dp.shutdown.register(stop_bot)
 
     # Настройка планировщика задач (APScheduler)
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+    # scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
     # Примечание: если функции в fas.py отправляют сообщения, им может понадобиться
     # экземпляр bot вместо dp. Если возникнут ошибки, замените args=(dp,) на args=(bot,)
-    scheduler.add_job(
-        send_msg_cron, 'cron', day_of_week='mon-fri', hour=17, minute=0,
-        start_date=datetime.now(), args=(dp,)
-    )
-
     # scheduler.add_job(
-    #     shutdown, 'cron', day_of_week='mon-sun', hour=5, minute=30,
+    #     send_msg_cron, 'cron', day_of_week='mon-fri', hour=17, minute=0,
     #     start_date=datetime.now(), args=(dp,)
     # )
-
-    scheduler.add_job(
-        update_func, 'interval', minutes=15, args=(dp,)
-    )
-
-    scheduler.add_job(
-        taskkill, 'interval', minutes=30, args=(dp,)
-    )
+    #
+    # # scheduler.add_job(
+    # #     shutdown, 'cron', day_of_week='mon-sun', hour=5, minute=30,
+    # #     start_date=datetime.now(), args=(dp,)
+    # # )
+    #
+    # scheduler.add_job(
+    #     update_func, 'interval', minutes=15, args=(dp,)
+    # )
+    #
+    # scheduler.add_job(
+    #     taskkill, 'interval', minutes=30, args=(dp,)
+    # )
 
     # scheduler.add_job(
     #     zamen_smol, 'cron', day_of_week='mon-fri', hour=16, minute=50,
@@ -96,7 +96,7 @@ async def main():
     #     start_date=datetime.now(), args=(dp,)
     # )
 
-    scheduler.start()
+    # scheduler.start()
 
     # Очистка вебхука и запуск polling
     # await bot.delete_webhook(drop_pending_updates=True)
