@@ -129,7 +129,8 @@ async def cmd_admin_ad(event: MessageCreated, context: MemoryContext):
 
 
 @router.message_created(Reg.text_1, F.message.body.text != '✖ Отмена')
-async def reg_admin_text_1(event: MessageCreated, bot: Bot, context: MemoryContext):
+async def reg_admin_text_1(event: MessageCreated, context: MemoryContext):
+    bot = event.bot  # Получаем бота из события
     await context.update_data(msg=event.message.body.text)
     full_data = await context.get_data()
     await context.clear()
@@ -137,9 +138,9 @@ async def reg_admin_text_1(event: MessageCreated, bot: Bot, context: MemoryConte
     if await db.db_check(event.message.sender.user_id, "Admin"):
         for id, name, surname in await db.db_select():
             try:
-                await bot.send_message(user_id=int(id), text=f"Привет {name}\n{full_data['msg']}\nАдминистрация!!!")
+                await bot.send_message(chat_id=int(id), text=f"Привет {name}\n{full_data['msg']}\nАдминистрация!!!")
             except Exception as e:
-                await bot.send_message(user_id=id_klient['bot'],
+                await bot.send_message(chat_id=id_klient['bot'],
                                        text=f'Ошибка при отправке сообщения пользователю {id}: {e}')
 
 
@@ -168,7 +169,8 @@ async def process_photo(event: MessageCreated, context: MemoryContext):
 
 
 @router.message_created(PhotoForm.waiting_for_caption, F.message.body.text)
-async def process_caption(event: MessageCreated, context: MemoryContext, bot: Bot):
+async def process_caption(event: MessageCreated, context: MemoryContext):
+    bot = event.bot  # Получаем бота из события
     await context.update_data(caption=event.message.body.text)
     full_data = await context.get_data()
     await context.clear()
@@ -177,10 +179,10 @@ async def process_caption(event: MessageCreated, context: MemoryContext, bot: Bo
         try:
             img = InputMedia(file_id=full_data['photo_id'])
             attachment = await bot.upload_media(img)
-            await bot.send_message(user_id=int(tg_id), text=f"Привет {name}!\n{full_data['caption']}\nАдминистрация!!!",
+            await bot.send_message(chat_id=int(tg_id), text=f"Привет {name}!\n{full_data['caption']}\nАдминистрация!!!",
                                    attachments=[attachment])
         except Exception as e:
-            await bot.send_message(user_id=id_klient['bot'],
+            await bot.send_message(chat_id=id_klient['bot'],
                                    text=f'Ошибка при отправке сообщения пользователю {tg_id}: {e}')
 
 
@@ -191,10 +193,11 @@ async def cmd_admin_del(event: MessageCreated, context: MemoryContext):
 
 
 @router.message_created(Reg.delete_account, F.message.body.text != '✖ Отмена')
-async def reg_admin_del_account(event: MessageCreated, bot: Bot, context: MemoryContext):
+async def reg_admin_del_account(event: MessageCreated, context: MemoryContext):
     if await db.db_check(event.message.sender.user_id, "Admin"):
         await db.db_delete(event.message.body.text)
-        await bot.send_message(user_id=event.message.sender.user_id, text="Аккаунт удален")
+        # Отвечаем в тот же чат, откуда пришло сообщение
+        await event.message.answer("Аккаунт удален")
         await context.clear()
 
 
@@ -205,11 +208,12 @@ async def cmd_admin_add(event: MessageCreated, context: MemoryContext):
 
 
 @router.message_created(Reg.add_account, F.message.body.text != '✖ Отмена')
-async def reg_admin_add_account(event: MessageCreated, bot: Bot, context: MemoryContext):
+async def reg_admin_add_account(event: MessageCreated, context: MemoryContext):
     if await db.db_check(event.message.sender.user_id, "Admin"):
         id_name, name = event.message.body.text.split(" ", 1)
         await db.cmd_start_db(id_name, name)
-        await bot.send_message(user_id=event.message.sender.user_id, text="Аккаунт добавлен")
+        # Отвечаем в тот же чат, откуда пришло сообщение
+        await event.message.answer("Аккаунт добавлен")
         await context.clear()
 
 
@@ -220,11 +224,12 @@ async def cmd_admin_update(event: MessageCreated, context: MemoryContext):
 
 
 @router.message_created(Reg.add_surname, F.message.body.text != '✖ Отмена')
-async def reg_admin_del_surname(event: MessageCreated, bot: Bot, context: MemoryContext):
+async def reg_admin_del_surname(event: MessageCreated, context: MemoryContext):
     if await db.db_check(event.message.sender.user_id, "Admin"):
         id_name, surname = event.message.body.text.split(" ", 1)
         await db.db_update(id_name, surname)
-        await bot.send_message(user_id=event.message.sender.user_id, text="Аккаунт обновлен")
+        # Отвечаем в тот же чат, откуда пришло сообщение
+        await event.message.answer("Аккаунт обновлен")
         await context.clear()
 
 
@@ -496,7 +501,6 @@ async def msg_add_amount(event: MessageCreated, context: MemoryContext):
         conn.commit()
         conn.close()
 
-        # ЗАМЕНИЛИ ** на <b> и УБРАЛИ parse_mode
         await event.message.answer(f"✅ Сохранено: <b>{amount:g} ₽</b> на {user_date}")
         await context.clear()
     except ValueError:
@@ -524,7 +528,6 @@ async def cb_view(event: MessageCallback):
         months[month].append((amount, date))
         grand_total += amount
 
-    # ЗАМЕНИЛИ Markdown (** и _) на HTML (<b> и <i>)
     text = "📊 <b>Статистика по месяцам:</b>\n\n"
 
     for month, records in sorted(months.items()):
@@ -543,7 +546,6 @@ async def cb_view(event: MessageCallback):
     if len(text) > 4000:
         text = text[:3900] + "\n\n⚠️ <i>Список слишком длинный и был обрезан.</i>"
 
-    # УБРАЛИ parse_mode="Markdown"
     await event.edit(text=text)
     await event.answer()
 
@@ -588,7 +590,6 @@ async def msg_edit_amt(event: MessageCreated, context: MemoryContext):
         conn.commit()
         conn.close()
 
-        # ЗАМЕНИЛИ ** на <b> и УБРАЛИ parse_mode
         await event.message.answer(f"✅ Сумма успешно обновлена на <b>{new_amount:g} ₽</b>")
         await context.clear()
         await show_edit_list(event.message)
@@ -601,7 +602,6 @@ async def cb_edit_dt(event: MessageCallback, context: MemoryContext):
     record_id = int(event.callback.payload.split(":")[1])
     await context.update_data(record_id=record_id)
     await context.set_state(EditState.waiting_for_date)
-    # УБРАЛИ parse_mode
     await event.edit(text="📅 Введите новую дату в формате ДД.ММ.ГГГГ (например, 15.01.2026):")
     await event.answer()
 
@@ -625,7 +625,6 @@ async def msg_edit_dt(event: MessageCreated, context: MemoryContext):
     conn.commit()
     conn.close()
 
-    # ЗАМЕНИЛИ ** на <b> и УБРАЛИ parse_mode
     await event.message.answer(f"✅ Дата успешно обновлена на <b>{new_date_input}</b>")
     await context.clear()
     await show_edit_list(event.message)
