@@ -175,12 +175,23 @@ async def cmd_dolgi(event: MessageCreated):
     from maxapi.types.attachments.buttons import CallbackButton
     from maxapi.types.attachments.attachment import ButtonsPayload
 
-    in_kb = []
-    for key, value in dolgi_user().items():
-        in_kb.append([CallbackButton(text=f'{key} {value:,}', payload=f'###{key}')])
+    items = list(dolgi_user().items())
+    if not items:
+        await event.message.answer("📕 Долгов нет")
+        return
 
-    payload = ButtonsPayload(buttons=in_kb).pack()
-    await event.message.answer("📕 Долги", attachments=[payload])
+    # Разбиваем на части по 10 строк, чтобы не превысить лимит API (errors.maxRows)
+    chunk_size = 30
+    for i in range(0, len(items), chunk_size):
+        chunk = items[i:i + chunk_size]
+        in_kb = []
+        for key, value in chunk:
+            in_kb.append([CallbackButton(text=f'{key} {value:,}', payload=f'###{key}')])
+
+        payload = ButtonsPayload(buttons=in_kb).pack()
+        # Первое сообщение с заголовком, остальные просто с кнопками
+        text = "📕 Долги" if i == 0 else "Продолжение списка..."
+        await event.message.answer(text, attachments=[payload])
 
 
 @router.message_callback(F.callback.payload.startswith("###"))
@@ -297,16 +308,22 @@ async def cmd_client(event: MessageCallback):
     from maxapi.types.attachments.buttons import CallbackButton
     from maxapi.types.attachments.attachment import ButtonsPayload
 
-    in_kb = []
-    for key, value in client(event.callback.payload[-1], dolgi_year[-2:]).items():
-        in_kb.append([CallbackButton(text=f'{key} {value:,}', payload=f'%#%{event.callback.payload[-1]}{key}')])
-
-    payload = ButtonsPayload(buttons=in_kb).pack()
-
-    if len(in_kb) != 0:
-        await event.message.answer(f"Клиенты {dolgi_year[-4:]} год", attachments=[payload])
-    else:
+    items = list(client(event.callback.payload[-1], dolgi_year[-2:]).items())
+    if not items:
         await event.message.answer(f"Клиенты на букву {event.callback.payload[-1]} нет")
+        await event.answer()
+        return
+
+    chunk_size = 30
+    for i in range(0, len(items), chunk_size):
+        chunk = items[i:i + chunk_size]
+        in_kb = []
+        for key, value in chunk:
+            in_kb.append([CallbackButton(text=f'{key} {value:,}', payload=f'%#%{event.callback.payload[-1]}{key}')])
+
+        payload = ButtonsPayload(buttons=in_kb).pack()
+        text = f"Клиенты {dolgi_year[-4:]} год" if i == 0 else "..."
+        await event.message.answer(text, attachments=[payload])
 
     await event.answer()
 

@@ -231,7 +231,7 @@ def vivod_inlinekey(lst, number, call_txt):
 in_risunok = ButtonsPayload(buttons=vivod_inlinekey(number_fasad, 7, '$')).pack()
 in_ris_facade = ButtonsPayload(buttons=vivod_inlinekey(number_fasad, 7, 'facade')).pack()
 in_mesyac = ButtonsPayload(buttons=vivod_inlinekey(mesyac, 4, '!!!')).pack()
-in_letter = ButtonsPayload(buttons=vivod_inlinekey(letter, 8, '%%%')).pack()
+in_letter = ButtonsPayload(buttons=vivod_inlinekey(letter, 7, '%%%')).pack()
 in_ris_price = ButtonsPayload(buttons=vivod_inlinekey(number_fasad, 7, 'fasad')).pack()
 in_group_pl = ButtonsPayload(buttons=vivod_inlinekey(group, 6, 'group')).pack()
 in_group_sort = ButtonsPayload(buttons=vivod_inlinekey(group, 6, 'sort')).pack()
